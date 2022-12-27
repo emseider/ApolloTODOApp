@@ -3,6 +3,7 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import fs from "fs";
 import * as dotenv from 'dotenv';
 dotenv.config();
+import { v4 as uuidv4 } from 'uuid';
 
 const DATA_FILE = process.env.DATA_FILE;
 
@@ -20,7 +21,7 @@ try {
 // Add a new todo item
 const addTodo = (parent, args, context, info) => {
   const newTodo = {
-    id: String(todos.length + 1),
+    id: uuidv4(),
     text: args.text,
     completed: false,
   };
@@ -30,12 +31,12 @@ const addTodo = (parent, args, context, info) => {
 };
 
 // Edit an existing todo item
-const editTodo = (parent, {id, text}, context, info) => {
+const editTodo = (parent, {id, completed}, context, info) => {
   const todoIndex = todos.findIndex((t) => t.id === id);
   if (todoIndex === -1) {
     throw new Error(`Todo with id ${id} not found`);
   }
-  todos[todoIndex].text = text;
+  todos[todoIndex].completed = completed || false;
   fs.writeFileSync(DATA_FILE, JSON.stringify(todos));
   return todos[todoIndex];
 };
@@ -66,7 +67,7 @@ const typeDefs = `
 
   type Mutation {
     addTodo(text: String!): Todo!
-    editTodo(id: ID!, text: String!): Todo!
+    editTodo(id: ID!, completed: Boolean): Todo!
     deleteTodo(id: ID!): Todo!
   }
 `;
